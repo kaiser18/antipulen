@@ -1,6 +1,6 @@
 # Discord OCR Image Moderator
 
-This bot uses Tesseract OCR to inspect image attachments. If an image contains `gamer igrica`, `toddy`, `todor`, `gamer`, or `gejmer`, it replies with a warning and deletes the original message.
+This bot uses Tesseract OCR to inspect image attachments and direct image links. If an image contains `gamer igrica`, `toddy`, `todor`, `gamer`, or `gejmer`, it replies with a warning and deletes the original message.
 
 ## Setup on Windows
 
@@ -50,4 +50,4 @@ This bot uses Tesseract OCR to inspect image attachments. If an image contains `
 
 The bot requires the same Discord application setup and server permissions described in the Windows instructions.
 
-The bot only processes image attachments and skips images larger than `MAX_IMAGE_BYTES` (10 MiB by default). OCR failures are logged and do not delete the message.
+The bot processes image attachments and direct image links. It skips images larger than `MAX_IMAGE_BYTES` (10 MiB by default), scans at most five links per message, and only downloads images from public HTTP(S) URLs. OCR failures are logged and do not delete the message.
