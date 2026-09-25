@@ -24,4 +24,30 @@ This bot uses Tesseract OCR to inspect image attachments. If an image contains `
    python bot.py
    ```
 
+## Setup on Linux
+
+1. Install Python 3.11 or newer, Tesseract OCR, and the required system packages:
+
+   ```bash
+   sudo apt update
+   sudo apt install python3 python3-venv tesseract-ocr
+   ```
+
+2. Create and activate a virtual environment in this folder:
+
+   ```bash
+   python3 -m venv .venv
+   source .venv/bin/activate
+   pip install -r requirements.txt
+   ```
+
+3. Create `.env` from `.env.example` and set `DISCORD_TOKEN`. If Tesseract is not on `PATH`, set `TESSERACT_CMD` to its executable path, commonly `/usr/bin/tesseract`.
+4. Start the bot:
+
+   ```bash
+   python bot.py
+   ```
+
+The bot requires the same Discord application setup and server permissions described in the Windows instructions.
+
 The bot only processes image attachments and skips images larger than `MAX_IMAGE_BYTES` (10 MiB by default). OCR failures are logged and do not delete the message.
