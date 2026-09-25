@@ -2,6 +2,27 @@
 
 This bot uses Tesseract OCR to inspect image attachments and direct image links. If an image contains `gamer igrica`, `toddy`, `todor`, `gamer`, or `gejmer`, it replies with a warning and deletes the original message.
 
+## Run with Docker
+
+1. Install Docker Desktop on Windows or Docker Engine on Linux.
+2. Copy `.env.example` to `.env` and set `DISCORD_TOKEN`.
+3. Start the bot:
+
+   Windows PowerShell:
+
+   ```powershell
+   .\run.ps1
+   ```
+
+   Linux:
+
+   ```bash
+   chmod +x run.sh
+   ./run.sh
+   ```
+
+The Docker image installs Python dependencies and Tesseract OCR automatically. The bot runs in the foreground and can be stopped with `Ctrl+C`.
+
 ## Setup on Windows
 
 1. Install Python 3.11 or newer.
