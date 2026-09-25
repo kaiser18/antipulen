@@ -75,7 +75,25 @@ class ImageModerator(discord.Client):
         logger.info("Logged in as %s (%s)", self.user, self.user.id if self.user else "unknown")
 
     async def on_message(self, message: discord.Message) -> None:
-        if message.author == self.user or not message.attachments:
+        if message.author == self.user:
+            return
+
+        blocked_terms = find_blocked_terms(message.content)
+        if blocked_terms:
+            logger.info(
+                "Removing message %s from %s; detected: %s",
+                message.id,
+                message.author,
+                ", ".join(blocked_terms),
+            )
+            try:
+                await message.reply(REPLY_TEXT, mention_author=False)
+            except discord.HTTPException:
+                logger.exception("Could not send moderation reply for message %s", message.id)
+            try:
+                await message.delete()
+            except discord.HTTPException:
+                logger.exception("Could not delete message %s", message.id)
             return
 
         for attachment in message.attachments:
