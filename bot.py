@@ -36,7 +36,28 @@ TESSERACT_CMD = os.getenv("TESSERACT_CMD")
 if TESSERACT_CMD:
     pytesseract.pytesseract.tesseract_cmd = TESSERACT_CMD
 
-BLOCKED_PHRASES = ("gamer igrica", "toddy", "todor", "gamer", "gejmer")
+DEFAULT_BLOCKED_PHRASES = ("gamer igrica", "toddy", "todor", "gamer", "gejmer")
+BLOCKED_PHRASES_FILE = Path(os.getenv("BLOCKED_PHRASES_FILE", Path(__file__).with_name("blocked_phrases.txt")))
+
+
+def load_blocked_phrases(path: str | Path = BLOCKED_PHRASES_FILE) -> tuple[str, ...]:
+    phrases_path = Path(path)
+    try:
+        if phrases_path.exists():
+            phrases = []
+            for line in phrases_path.read_text(encoding="utf-8").splitlines():
+                term = line.strip()
+                if not term or term.startswith("#"):
+                    continue
+                phrases.append(term)
+            if phrases:
+                return tuple(phrases)
+    except OSError:
+        logger.warning("Could not read blocked phrases from %s; using defaults.", phrases_path)
+    return DEFAULT_BLOCKED_PHRASES
+
+
+BLOCKED_PHRASES = load_blocked_phrases()
 BLOCKED_PATTERNS = tuple(
     re.compile(re.escape(term).replace(r"\ ", r"\s+"))
     for term in BLOCKED_PHRASES

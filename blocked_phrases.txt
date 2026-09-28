@@ -1,0 +1,7 @@
+# Add one blocked phrase per line. Lines starting with # are ignored.
+# You can also set BLOCKED_PHRASES_FILE to a different path in your environment.
+gamer igrica
+toddy
+todor
+gamer
+gejmer
