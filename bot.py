@@ -58,10 +58,26 @@ def load_blocked_phrases(path: str | Path = BLOCKED_PHRASES_FILE) -> tuple[str, 
 
 
 BLOCKED_PHRASES = load_blocked_phrases()
-BLOCKED_PATTERNS = tuple(
-    re.compile(re.escape(term).replace(r"\ ", r"\s+"))
-    for term in BLOCKED_PHRASES
-)
+
+SERBIAN_CASE_FORMS = {
+    "gamer": ("gamer", "gamera", "gameru", "gamere", "gamerom", "gameri", "gamerima"),
+    "gejmer": ("gejmer", "gejmera", "gejmeru", "gejmere", "gejmerom", "gejmeri", "gejmerima"),
+    "igrica": ("igrica", "igrice", "igrici", "igricu", "igricom", "igricama"),
+    "toddy": ("toddy", "toddyja", "toddyju", "toddyjem", "toddyji", "toddyje", "toddyjima"),
+    "todor": ("todor", "todora", "todoru", "todore", "todorom", "todori", "todorima"),
+}
+
+
+def compile_blocked_pattern(term: str) -> re.Pattern[str]:
+    token_patterns = []
+    for token in term.casefold().split():
+        forms = SERBIAN_CASE_FORMS.get(token, (token,))
+        token_patterns.append("(?:" + "|".join(re.escape(form) for form in forms) + ")")
+
+    return re.compile(r"(?<!\w)" + r"\s+".join(token_patterns) + r"(?!\w)")
+
+
+BLOCKED_PATTERNS = tuple(compile_blocked_pattern(term) for term in BLOCKED_PHRASES)
 URL_PATTERN = re.compile(r"https?://[^\s<>]+", re.IGNORECASE)
 
 
@@ -164,26 +180,30 @@ class ImageModerator(discord.Client):
     async def on_ready(self) -> None:
         logger.info("Logged in as %s (%s)", self.user, self.user.id if self.user else "unknown")
 
+    @staticmethod
+    async def remove_message(message: discord.Message, blocked_terms: list[str]) -> None:
+        logger.info(
+            "Removing message %s from %s; detected: %s",
+            message.id,
+            message.author,
+            ", ".join(blocked_terms),
+        )
+        try:
+            await message.reply(REPLY_TEXT, mention_author=False)
+        except discord.HTTPException:
+            logger.exception("Could not send moderation reply for message %s", message.id)
+        try:
+            await message.delete()
+        except discord.HTTPException:
+            logger.exception("Could not delete message %s", message.id)
+
     async def on_message(self, message: discord.Message) -> None:
         if message.author == self.user:
             return
 
         blocked_terms = find_blocked_terms(message.content)
         if blocked_terms:
-            logger.info(
-                "Removing message %s from %s; detected: %s",
-                message.id,
-                message.author,
-                ", ".join(blocked_terms),
-            )
-            try:
-                await message.reply(REPLY_TEXT, mention_author=False)
-            except discord.HTTPException:
-                logger.exception("Could not send moderation reply for message %s", message.id)
-            try:
-                await message.delete()
-            except discord.HTTPException:
-                logger.exception("Could not delete message %s", message.id)
+            await self.remove_message(message, blocked_terms)
             return
 
         urls = linked_image_urls(message.content)
@@ -203,20 +223,7 @@ class ImageModerator(discord.Client):
                     if not blocked_terms:
                         continue
 
-                    logger.info(
-                        "Removing message %s from %s; detected: %s",
-                        message.id,
-                        message.author,
-                        ", ".join(blocked_terms),
-                    )
-                    try:
-                        await message.reply(REPLY_TEXT, mention_author=False)
-                    except discord.HTTPException:
-                        logger.exception("Could not send moderation reply for message %s", message.id)
-                    try:
-                        await message.delete()
-                    except discord.HTTPException:
-                        logger.exception("Could not delete message %s", message.id)
+                    await self.remove_message(message, blocked_terms)
                     return
 
         for attachment in message.attachments:
@@ -237,20 +244,7 @@ class ImageModerator(discord.Client):
             if not blocked_terms:
                 continue
 
-            logger.info(
-                "Removing message %s from %s; detected: %s",
-                message.id,
-                message.author,
-                ", ".join(blocked_terms),
-            )
-            try:
-                await message.reply(REPLY_TEXT, mention_author=False)
-            except discord.HTTPException:
-                logger.exception("Could not send moderation reply for message %s", message.id)
-            try:
-                await message.delete()
-            except discord.HTTPException:
-                logger.exception("Could not delete message %s", message.id)
+            await self.remove_message(message, blocked_terms)
             return
 
 
